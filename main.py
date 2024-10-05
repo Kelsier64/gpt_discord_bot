@@ -10,15 +10,31 @@ intents = nextcord.Intents.default()
 intents.members = True
 intents.message_content = True
 
-client = commands.Bot(command_prefix='$', intents=intents)
+bot = commands.Bot(command_prefix='$', intents=intents)
 
-@client.event
+@bot.event
 async def on_ready():
-    print("bot is ready")
+    print(f"目前登入身份 --> {bot.user}")
+cogs = ["gpt"]
+
+@bot.command()
+async def load(ctx, extension):
+    bot.load_extension(f"cogs.{extension}")
+    await ctx.send(f"Loaded {extension} done.")
+
+# 卸載指令檔案
+@bot.command()
+async def unload(ctx, extension):
+    bot.unload_extension(f"cogs.{extension}")
+    await ctx.send(f"Unloaded {extension} done.")
+
+# 重新載入程式檔案
+@bot.command()
+async def reload(ctx, extension):
+    bot.reload_extension(f"cogs.{extension}")
+    await ctx.send(f"Reloaded {extension} done.")
 
 if __name__ == "__main__":
-	cogs = []
 	for cog in cogs:
-		client.load_extension(f"cogs.{cog}")
-
-	client.run(dc_token)
+		bot.load_extension(f"cogs.{cog}")
+	bot.run(dc_token)
