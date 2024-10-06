@@ -1,0 +1,9 @@
+streamlit
+openai
+requests
+num2words
+pandas
+numpy
+opencv-python
+python-dotenv
+nextcord
