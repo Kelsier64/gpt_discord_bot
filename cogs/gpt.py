@@ -4,24 +4,26 @@ from nextcord.ext import commands
 import openai_api
 import requests
 import base64
+from datetime import datetime
+import pytz
 class Gpt(commands.Cog):
-    gpt_state = True
-    history = []
+    guilds = [1270418744434491413,1156116900321960017,1292494291926777896]
 
     def __init__(self,bot):
         self.bot = bot
-
-    @nextcord.slash_command(name="activate",description="activate the gpt")
+        self.gpt_state = True
+        self.history = []
+    @nextcord.slash_command(name="activate",description="activate the gpt",guild_ids=guilds)
     async def activate(self,interaction:Interaction):
         self.gpt_state = True
         await interaction.response.send_message("gpt is now activated")
 
-    @nextcord.slash_command(name="deactivate",description="deactivate the gpt")
+    @nextcord.slash_command(name="deactivate",description="deactivate the gpt",guild_ids=guilds)
     async def deactivate(self,interaction:Interaction):
         self.gpt_state = False
         await interaction.response.send_message("gpt is now deactivated")
     
-    @nextcord.slash_command(name="read",description="read message history")
+    @nextcord.slash_command(name="read",description="read message history",guild_ids=guilds)
     async def read(self,interaction:Interaction,limit:int):
         channel = interaction.channel
         self.history.clear()
@@ -29,13 +31,18 @@ class Gpt(commands.Cog):
             self.history.append(f"{msg.author}: {msg.content}")
         await interaction.response.send_message(f"read {limit} messages done")
         
-    @nextcord.slash_command(name="clear",description="clear message history")
+    @nextcord.slash_command(name="clear",description="clear message history",guild_ids=guilds)
     async def clear(self,interaction:Interaction):
         self.history.clear()
         await interaction.response.send_message("cleared messages done")
     
     @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message):
+        timestamp = message.created_at
+        gmt_plus_8 = pytz.timezone('Asia/Taipei')
+        timestamp = timestamp.astimezone(gmt_plus_8)
+        time = f"{timestamp.date()}/{timestamp.hour}:{timestamp.minute}:{timestamp.second}"
+
         if message.author == self.bot.user or not self.gpt_state:
             return
         else:
@@ -48,9 +55,9 @@ class Gpt(commands.Cog):
                             {"role": "user", "content": f"{message.author}: {message.content}"}]
                     self.history.append(f"{message.author}: {message.content}")
             else:
-                msgs = [{"role": "system", "content": f"以下是對話歷史記錄:{self.history} 請根據歷史記錄回答user"},{"role": "user", "content": f"{message.author}: {message.content}"}]
-                self.history.append(f"{message.author}: {message.content}")
-
+                msgs = [{"role": "system", "content": f"以下是對話歷史記錄:{self.history}"},{"role": "user", "content": f"以下是最新訊息： time:{time} author:{message.author} message:{message.content}"}]
+                self.history.append(f"time:{time} author:{message.author} message:{message.content}")
+            msgs.append({"role": "system", "content":"請回覆最新訊息"})
             reply = openai_api.str_request(msgs, 500)
             self.history.append(f"me: {reply}")
 
