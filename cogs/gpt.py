@@ -1,11 +1,36 @@
 import nextcord
 from nextcord import Interaction
 from nextcord.ext import commands
-import openai_api
 import requests
 import base64
 from datetime import datetime
 import pytz
+from dotenv import load_dotenv
+from openai import AzureOpenAI
+import os
+
+load_dotenv()
+API_KEY = os.getenv("AZURE_OPENAI_API_KEY") 
+RESOURCE_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT") 
+deployment_name = "gpt4o"
+
+client = AzureOpenAI(
+  api_key = os.getenv("AZURE_OPENAI_API_KEY"),  
+  api_version = "2024-09-01-preview",
+  azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+)
+def str_request(messages, max_tokens):
+    try:
+        response = client.chat.completions.create(
+            model=deployment_name,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=0.2
+        )
+        return response.choices[0].message.content
+    except:
+        return "error"
+
 class Gpt(commands.Cog):
     guilds = [1270418744434491413,1156116900321960017,1292494291926777896]
 
@@ -58,7 +83,7 @@ class Gpt(commands.Cog):
                 msgs = [{"role": "system", "content": f"以下是對話歷史記錄:{self.history}"},{"role": "user", "content": f"以下是最新訊息： time:{time} author:{message.author} message:{message.content}"}]
                 self.history.append(f"time:{time} author:{message.author} message:{message.content}")
             msgs.append({"role": "system", "content":"請回覆最新訊息"})
-            reply = openai_api.str_request(msgs, 500)
+            reply = str_request(msgs, 500)
             self.history.append(f"me: {reply}")
 
             await message.channel.send(reply)

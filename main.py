@@ -3,6 +3,7 @@ import os
 import nextcord
 from nextcord import Interaction
 from nextcord.ext import commands
+from aiohttp import web
 load_dotenv()
 dc_token = os.getenv("DISCORD_BOT_TOKEN") 
 
